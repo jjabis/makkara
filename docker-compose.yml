@@ -1,0 +1,12 @@
+services:
+  sausage-tracker:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data:Z
+    environment:
+      - PORT=3000
+      - SHARED_PASSWORD=sausage123
+      - ADMIN_KEY=letmein
+    restart: unless-stopped
