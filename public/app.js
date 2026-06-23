@@ -485,7 +485,7 @@ logMateBtn.addEventListener('click', async () => {
   users.forEach(u => {
     const item = document.createElement('div');
     item.className = 'mate-item';
-    item.innerHTML = `<span class="mate-name">${escHtml(u.username)}</span><span class="mate-count">${u.total} 🥩</span>`;
+    item.innerHTML = `<span class="mate-name">${escHtml(u.username)}</span><span class="mate-count">${buildSmallSausageSVG()} ${u.total}</span>`;
     item.addEventListener('click', () => {
       mateModal.classList.add('hidden');
       logSausage(u.id);
