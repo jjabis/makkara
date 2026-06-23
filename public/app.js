@@ -475,99 +475,189 @@ logMateBtn.addEventListener('click', async () => {
 modalCloseBtn.addEventListener('click', () => mateModal.classList.add('hidden'));
 mateModal.addEventListener('click', e => { if (e.target === mateModal) mateModal.classList.add('hidden'); });
 
+// ── Eat animation helpers ──────────────────────────────────────────────────
+function buildRawSausageSVG(w, h) {
+  const r = h / 2;
+  const id = Math.random().toString(36).slice(2, 7);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="raw-${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#f5cdb8"/>
+      <stop offset="60%"  stop-color="#e8a888"/>
+      <stop offset="100%" stop-color="#d08060"/>
+    </linearGradient>
+    <clipPath id="rawc-${id}">
+      <rect x="0" y="0" width="${w}" height="${h}" rx="${r}" ry="${r}"/>
+    </clipPath>
+  </defs>
+  <rect x="0" y="0" width="${w}" height="${h}" rx="${r}" ry="${r}" fill="url(#raw-${id})"/>
+  <ellipse cx="${r}"     cy="${h*0.6}" rx="${r*0.5}" ry="${r*0.8}" fill="rgba(0,0,0,0.1)"  clip-path="url(#rawc-${id})"/>
+  <ellipse cx="${w-r}"   cy="${h*0.6}" rx="${r*0.5}" ry="${r*0.8}" fill="rgba(0,0,0,0.1)"  clip-path="url(#rawc-${id})"/>
+  <ellipse cx="${w/2}"   cy="${h*0.3}" rx="${w*0.3}" ry="${h*0.14}" fill="rgba(255,240,230,0.5)" clip-path="url(#rawc-${id})"/>
+  <rect x="0.75" y="0.75" width="${w-1.5}" height="${h-1.5}" rx="${r}" ry="${r}" fill="none" stroke="#c08868" stroke-width="1.5"/>
+</svg>`;
+}
+
+function buildBonfireSVG(w) {
+  const SH = 200;
+  const base = SH;
+
+  const outerFlames = [
+    { x: w*0.28, fh: 175, fw: 0.35, delay: '0.09s' },
+    { x: w*0.50, fh: 185, fw: 0.38, delay: '0.04s' },
+    { x: w*0.72, fh: 170, fw: 0.33, delay: '0.13s' },
+  ];
+  const innerFlames = [
+    { x: w*0.32, fh: 110, fw: 0.18, delay: '0.06s' },
+    { x: w*0.50, fh: 130, fw: 0.22, delay: '0.02s' },
+    { x: w*0.68, fh: 105, fw: 0.17, delay: '0.11s' },
+  ];
+
+  function flamePath(x, fh, fw) {
+    const hw = fh * fw;
+    const tip = base - fh;
+    return `M ${x},${base} C ${x-hw},${base-fh*0.28} ${x-hw*0.55},${base-fh*0.68} ${x},${tip} C ${x+hw*0.55},${base-fh*0.68} ${x+hw},${base-fh*0.28} ${x},${base} Z`;
+  }
+
+  const outerPaths = outerFlames.map(({x, fh, fw, delay}) =>
+    `<path d="${flamePath(x,fh,fw)}" fill="url(#fout)" style="transform-origin:${x}px ${base}px;animation:flicker 0.38s ${delay} ease-in-out infinite alternate"/>`
+  ).join('');
+  const innerPaths = innerFlames.map(({x, fh, fw, delay}) =>
+    `<path d="${flamePath(x,fh,fw)}" fill="url(#fin)" style="transform-origin:${x}px ${base}px;animation:flicker 0.30s ${delay} ease-in-out infinite alternate"/>`
+  ).join('');
+
+  return `<svg width="${w}" height="${SH}" viewBox="0 0 ${w} ${SH}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
+  <defs>
+    <linearGradient id="fout" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#cc2200"/>
+      <stop offset="35%"  stop-color="#ff6600"/>
+      <stop offset="75%"  stop-color="#ffaa00"/>
+      <stop offset="100%" stop-color="#ffdd00" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fin" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#ff8800"/>
+      <stop offset="50%"  stop-color="#ffdd00"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="ember" cx="50%" cy="100%" r="55%">
+      <stop offset="0%"   stop-color="#ff6600" stop-opacity="0.9"/>
+      <stop offset="60%"  stop-color="#ff2200" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#aa1100" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      @keyframes flicker {
+        from { transform: scaleX(1)    scaleY(1);    }
+        to   { transform: scaleX(0.78) scaleY(1.14); }
+      }
+    </style>
+  </defs>
+  <ellipse cx="${w/2}" cy="${SH}" rx="${w*0.55}" ry="28" fill="url(#ember)"/>
+  <rect x="${w*0.08}" y="${SH-18}" width="${w*0.56}" height="18" rx="7" fill="#3a1a08" transform="rotate(-8,${w*0.36},${SH-9})"/>
+  <rect x="${w*0.36}" y="${SH-18}" width="${w*0.60}" height="18" rx="7" fill="#3a1a08" transform="rotate(6,${w*0.66},${SH-9})"/>
+  ${outerPaths}
+  ${innerPaths}
+</svg>`;
+}
+
 // ── Eat animation ──────────────────────────────────────────────────────────
 function playEatAnimation() {
   return new Promise(resolve => {
     const W = 170, H = 80;
-    eatSausageWrap.innerHTML = buildSausageSVG(W, H);
     eatMsg.style.opacity = '0';
     eatMsg.textContent = randItem(FELLED_MESSAGES);
-
     eatOverlay.classList.remove('hidden');
 
-    const svg = eatSausageWrap.querySelector('svg');
-    svg.style.transition = 'none';
-    svg.style.opacity = '0';
-    svg.style.transform = 'scale(0.7)';
+    const WRAP_H = 175;
+    eatSausageWrap.style.cssText = `position:relative;width:${W}px;height:${WRAP_H}px;overflow:visible`;
 
-    // Step 1: scale in
+    const rawDiv = document.createElement('div');
+    rawDiv.style.cssText = 'position:absolute;top:8px;left:0;opacity:0;transform:scale(0.8);transition:opacity 0.3s ease,transform 0.35s ease';
+    rawDiv.innerHTML = buildRawSausageSVG(W, H);
+
+    const cookedDiv = document.createElement('div');
+    cookedDiv.style.cssText = 'position:absolute;top:8px;left:0;opacity:0;transition:opacity 1s ease';
+    cookedDiv.innerHTML = buildSausageSVG(W, H);
+
+    const flameDiv = document.createElement('div');
+    flameDiv.style.cssText = 'position:absolute;bottom:0;left:0;opacity:0;transform:scaleY(0);transform-origin:bottom center;transition:opacity 0.4s ease,transform 0.6s ease;pointer-events:none';
+    flameDiv.innerHTML = buildBonfireSVG(W);
+
+    eatSausageWrap.innerHTML = '';
+    eatSausageWrap.appendChild(rawDiv);
+    eatSausageWrap.appendChild(cookedDiv);
+    eatSausageWrap.appendChild(flameDiv);
+
+    // Stage 1: raw sausage scales in
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      svg.style.transition = 'opacity 0.25s ease, transform 0.3s ease';
-      svg.style.opacity = '1';
-      svg.style.transform = 'scale(1)';
+      rawDiv.style.opacity = '1';
+      rawDiv.style.transform = 'scale(1)';
     }));
 
-    // Step 2: bite animation via clip-path (4 bites, eating from right)
-    const bites = 4;
-    const biteDelay = 250;
-    const startDelay = 350;
+    // Stage 2: bonfire builds (500ms)
+    setTimeout(() => {
+      flameDiv.style.opacity = '1';
+      flameDiv.style.transform = 'scaleY(1)';
+      setTimeout(() => { cookedDiv.style.opacity = '1'; }, 300);
+    }, 500);
 
-    // We animate a clip rect getting narrower from the right
-    // Inject a clipPath into the SVG
-    const clipId = 'eat-bite-clip';
-    const ns = 'http://www.w3.org/2000/svg';
+    // Stage 3: bonfire dies down (1600ms)
+    setTimeout(() => {
+      flameDiv.style.opacity = '0';
+      flameDiv.style.transform = 'scaleY(0)';
+      rawDiv.style.opacity = '0';
+    }, 1600);
 
-    const defs = svg.querySelector('defs') || (() => {
-      const d = document.createElementNS(ns, 'defs');
-      svg.prepend(d);
-      return d;
-    })();
+    // Stage 4: bite animation (1750ms)
+    setTimeout(() => {
+      const svg = cookedDiv.querySelector('svg');
+      const ns = 'http://www.w3.org/2000/svg';
+      const defs = svg.querySelector('defs') || (() => {
+        const d = document.createElementNS(ns, 'defs'); svg.prepend(d); return d;
+      })();
+      const clipId = 'eat-bite-clip';
+      const clipPath = document.createElementNS(ns, 'clipPath');
+      clipPath.id = clipId;
+      const clipRect = document.createElementNS(ns, 'rect');
+      clipRect.setAttribute('x', '0');
+      clipRect.setAttribute('y', '0');
+      clipRect.setAttribute('width', String(W));
+      clipRect.setAttribute('height', String(H));
+      clipPath.appendChild(clipRect);
+      defs.appendChild(clipPath);
+      svg.childNodes.forEach(node => {
+        if (node !== defs && node.setAttribute) node.setAttribute('clip-path', `url(#${clipId})`);
+      });
 
-    const clipPath = document.createElementNS(ns, 'clipPath');
-    clipPath.id = clipId;
-    const clipRect = document.createElementNS(ns, 'rect');
-    clipRect.setAttribute('x', '0');
-    clipRect.setAttribute('y', '0');
-    clipRect.setAttribute('width', String(W));
-    clipRect.setAttribute('height', String(H));
-    clipPath.appendChild(clipRect);
-    defs.appendChild(clipPath);
+      let remaining = W;
+      let bite = 0;
+      const bites = 4;
 
-    // Apply clip to all direct children that aren't defs
-    svg.childNodes.forEach(node => {
-      if (node !== defs && node.setAttribute) {
-        node.setAttribute('clip-path', `url(#${clipId})`);
+      function takeBite() {
+        if (bite >= bites) {
+          svg.style.transition = 'opacity 0.2s';
+          svg.style.opacity = '0';
+          setTimeout(() => {
+            eatMsg.style.transition = 'opacity 0.4s';
+            eatMsg.style.opacity = '1';
+          }, 100);
+          setTimeout(() => {
+            eatOverlay.classList.add('hidden');
+            eatMsg.style.opacity = '0';
+            resolve();
+          }, 2200);
+          return;
+        }
+        remaining = Math.max(0, remaining - (W / (bites + 1)) * (1 + bite * 0.15));
+        clipRect.style.transition = 'width 0.14s ease-in';
+        clipRect.setAttribute('width', String(remaining));
+        svg.style.transition = 'transform 0.07s';
+        svg.style.transform = 'translateX(-5px)';
+        setTimeout(() => { svg.style.transform = 'translateX(0)'; }, 70);
+        bite++;
+        setTimeout(takeBite, 230);
       }
-    });
-
-    let remainingWidth = W;
-    let bitesDone = 0;
-
-    function takeBite() {
-      if (bitesDone >= bites) {
-        // Final: fade out
-        svg.style.transition = 'opacity 0.2s ease';
-        svg.style.opacity = '0';
-        // Show message
-        setTimeout(() => {
-          eatMsg.style.transition = 'opacity 0.35s ease';
-          eatMsg.style.opacity = '1';
-        }, 100);
-        setTimeout(() => {
-          eatOverlay.classList.add('hidden');
-          eatMsg.style.opacity = '0';
-          resolve();
-        }, 2000);
-        return;
-      }
-
-      const biteSize = (W / (bites + 1)) * (1 + bitesDone * 0.15);
-      remainingWidth = Math.max(0, remainingWidth - biteSize);
-
-      // Animate clip rect width
-      clipRect.style.transition = `width 0.15s ease-in`;
-      clipRect.setAttribute('width', String(remainingWidth));
-
-      // Add a "chomped" visual: brief shake
-      svg.style.transition = 'transform 0.08s';
-      svg.style.transform = 'scale(1) translateX(-4px)';
-      setTimeout(() => { svg.style.transform = 'scale(1) translateX(0)'; }, 80);
-
-      bitesDone++;
-      setTimeout(takeBite, biteDelay);
-    }
-
-    setTimeout(takeBite, startDelay);
+      takeBite();
+    }, 1750);
   });
 }
 
