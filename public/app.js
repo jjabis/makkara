@@ -895,7 +895,7 @@ function updatePace() {
   }
 
   const rate = remaining / awakeHours;
-  paceEl.textContent = `${rate.toFixed(1)} / hr`;
+  paceEl.textContent = `${rate.toFixed(1)} / waking hour`;
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
