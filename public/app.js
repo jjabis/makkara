@@ -324,6 +324,7 @@ async function showApp() {
   try {
     const state = await apiFetch('/api/state');
     renderState(state);
+    startPaceTicker();
     if (state.showCelebration) showCelebration();
   } catch (_) {}
 }
@@ -405,6 +406,7 @@ socket.on('state_update', (state) => {
   if (!authToken) return;
   const flashId = state.lastLoggedUserId ?? null;
   renderState(state, flashId);
+  updatePace();
 
   const newTotal = state.groupTotal || 0;
 
@@ -638,6 +640,97 @@ window.addEventListener('resize', () => {
     sausageBarWrap.innerHTML = buildSausageProgressBar(pct, barWidth, 48);
   }
 });
+
+// ── Countdown + pace ──────────────────────────────────────────────────────
+const GOAL = 100;
+const SLEEP_START = 0;   // midnight
+const SLEEP_END   = 8;   // 8 AM
+
+function getNextSunday10AM() {
+  const now = new Date();
+  const d = new Date(now);
+  const day = d.getDay(); // 0 = Sun
+  let daysToAdd = day === 0 ? 0 : 7 - day;
+  if (day === 0 && (d.getHours() > 10 || (d.getHours() === 10 && d.getMinutes() > 0))) {
+    daysToAdd = 7;
+  }
+  const deadline = new Date(d);
+  deadline.setDate(d.getDate() + daysToAdd);
+  deadline.setHours(10, 0, 0, 0);
+  return deadline;
+}
+
+function getAwakeHoursRemaining(now, deadline) {
+  let awakeMs = 0;
+  let cursor = new Date(now);
+  while (cursor < deadline) {
+    const h = cursor.getHours();
+    if (h >= SLEEP_START && h < SLEEP_END) {
+      const wake = new Date(cursor);
+      wake.setHours(SLEEP_END, 0, 0, 0);
+      cursor = wake < deadline ? wake : deadline;
+      continue;
+    }
+    const nextMidnight = new Date(cursor);
+    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    nextMidnight.setHours(0, 0, 0, 0);
+    const boundary = nextMidnight < deadline ? nextMidnight : deadline;
+    awakeMs += boundary - cursor;
+    cursor = boundary;
+  }
+  return awakeMs / 3_600_000;
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return 'Now!';
+  const totalSec = Math.floor(ms / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+let paceInterval = null;
+
+function startPaceTicker() {
+  if (paceInterval) return;
+  updatePace();
+  paceInterval = setInterval(updatePace, 30_000);
+}
+
+function updatePace() {
+  const countdownEl = document.getElementById('countdown');
+  const paceEl      = document.getElementById('pace-value');
+  if (!countdownEl || !paceEl) return;
+
+  const now      = new Date();
+  const deadline = getNextSunday10AM();
+  const msLeft   = deadline - now;
+
+  countdownEl.textContent = formatCountdown(msLeft);
+
+  const current = parseInt(progressCount.textContent, 10) || 0;
+  const remaining = GOAL - current;
+
+  if (remaining <= 0) {
+    paceEl.textContent = 'Goal reached!';
+    paceEl.classList.add('pace-done');
+    return;
+  }
+
+  paceEl.classList.remove('pace-done');
+
+  const awakeHours = getAwakeHoursRemaining(now, deadline);
+  if (awakeHours <= 0) {
+    paceEl.textContent = 'Too late 💀';
+    return;
+  }
+
+  const rate = remaining / awakeHours;
+  paceEl.textContent = `${rate.toFixed(1)} / hr`;
+}
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 (async function boot() {

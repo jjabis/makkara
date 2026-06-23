@@ -6,12 +6,17 @@
 const USERS = [
   'Jimi',
   'Aleksi',
-  'Mikko',
+  'Kirsi',
+  'Kaapo',
+  'Santeri',
+  'Riku',
   'Toni',
-  'Sami',
-  'Petri',
-  'Teemu',
-  'Juha',
+  'Karri',
+  'Roni',
+  'Mika',
+  'Mirka',
+  'Miikka',
+  'Ville',
 ];
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'letmein';
