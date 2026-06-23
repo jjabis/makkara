@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sausage Tracker</title>
+  <title>Sausage Tracker — Matchmaking</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,12 +15,12 @@
       <!-- Large sausage SVG injected by JS -->
     </div>
     <h1>Sausage Tracker</h1>
-    <p class="login-sub">Choose your identity, Unkindled.</p>
+    <p class="login-sub">Select your profile to join the server.</p>
     <select id="username-select">
       <option value="">— Select thy name —</option>
     </select>
     <input id="password-input" type="password" placeholder="Shared password" autocomplete="current-password">
-    <button id="login-btn">Enter</button>
+    <button id="login-btn">Connect to server</button>
     <p id="login-error" class="error-msg"></p>
   </div>
 </div>
@@ -29,14 +29,14 @@
 <div id="app" class="hidden">
   <header>
     <span id="header-user"></span>
-    <button id="logout-btn" class="ghost-btn">Leave</button>
+    <button id="logout-btn" class="ghost-btn">Disconnect</button>
   </header>
 
   <!-- Progress bar -->
   <section class="progress-section">
     <div class="progress-label">
       <span id="progress-count">0</span><span class="progress-sep"> / </span><span id="progress-goal">100</span>
-      <span class="progress-unit"> sausages consumed</span>
+      <span class="progress-unit"> kills</span>
     </div>
     <div class="sausage-bar-wrap">
       <!-- SVG sausage progress bar injected by JS -->
@@ -45,24 +45,24 @@
 
   <!-- Leaderboard -->
   <section class="leaderboard-section">
-    <h2>Hall of Gluttony</h2>
+    <h2>Scoreboard</h2>
     <div id="leaderboard"></div>
   </section>
 
   <!-- Action buttons -->
   <div class="action-buttons">
-    <button id="log-self-btn" class="btn-primary">Log my sausage</button>
-    <button id="log-mate-btn" class="btn-secondary">Log for a mate</button>
+    <button id="log-self-btn" class="btn-primary">I ate a sausage</button>
+    <button id="log-mate-btn" class="btn-secondary">My mate ate a sausage</button>
   </div>
 </div>
 
 <!-- ── Log for a mate modal ──────────────────────────────────────────── -->
 <div id="mate-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
   <div class="modal-box">
-    <h3>Log for a mate</h3>
-    <p class="modal-sub">Tap a name to log 1 sausage for them.</p>
+    <h3>Log kill for teammate</h3>
+    <p class="modal-sub">Select teammate who ate a sausage.</p>
     <div id="mate-list"></div>
-    <button class="modal-close ghost-btn" id="modal-close-btn">Cancel</button>
+    <button class="modal-close ghost-btn" id="modal-close-btn">Abort</button>
   </div>
 </div>
 
@@ -80,8 +80,8 @@
   <div class="celebrate-inner">
     <div id="celebrate-sausage"></div>
     <h2 class="celebrate-title">100 sausages eaten</h2>
-    <p class="celebrate-sub">The group hath triumphed.</p>
-    <button id="celebrate-dismiss" class="btn-primary">So it is.</button>
+    <p class="celebrate-sub">GG — match over. Well played.</p>
+    <button id="celebrate-dismiss" class="btn-primary">GG EZ</button>
   </div>
 </div>
 

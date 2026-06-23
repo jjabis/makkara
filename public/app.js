@@ -1,28 +1,40 @@
 'use strict';
 
-// ── Config: ranks ──────────────────────────────────────────────────────────
+// ── Config: ranks (CS:GO) ─────────────────────────────────────────────────
 const RANKS = [
-  { min: 26, label: 'Infernal Max Cape' },
-  { min: 21, label: 'Trimmed Completionist' },
-  { min: 17, label: 'Sausage Slayer Master' },
-  { min: 13, label: 'Fire Cape Enjoyer' },
-  { min: 10, label: 'Barrows Banger' },
-  { min: 7,  label: 'Rune Sausager' },
-  { min: 5,  label: 'Mithril Muncher' },
-  { min: 3,  label: 'Iron Eater' },
-  { min: 1,  label: 'Bronze Nibbler' },
-  { min: 0,  label: 'Tutorial Island' },
+  { min: 10, label: 'Global Elite' },
+  { min: 9,  label: 'Supreme Master First Class' },
+  { min: 8,  label: 'Legendary Eagle Master' },
+  { min: 7,  label: 'Legendary Eagle' },
+  { min: 6,  label: 'Distinguished Master Guardian' },
+  { min: 5,  label: 'Master Guardian Elite' },
+  { min: 4,  label: 'Master Guardian I' },
+  { min: 3,  label: 'Gold Nova Master' },
+  { min: 2,  label: 'Gold Nova I' },
+  { min: 1,  label: 'Silver Elite' },
+  { min: 0,  label: 'Silver I' },
 ];
 
 // ── Config: eat animation messages ────────────────────────────────────────
 const FELLED_MESSAGES = [
-  'Sausage has been slain',
-  'You have defeated the banger',
-  'Gg ez sausage',
-  'New sausage drop: 1 eaten',
-  'Sausage Champion defeated',
-  'Your sausage has been added to your bank',
-  'You feel the power of the sausage flow through you',
+  'Sausage eliminated',
+  'Clutched the banger 1v1',
+  'Sausage defused',
+  'Headshot. Sausage down.',
+  'AWP shot. Clean kill.',
+  'Banger has been planted',
+  'Sausage bought with eco money',
+  'Full buy — full eat',
+  'Sausage rushed B, got eaten',
+  'GG EZ. Next sausage.',
+  'Sausage disconnected (eaten)',
+  'Knife kill. Sausage rekt.',
+  'That sausage was hacking. Reported.',
+  'Molotov. Sausage cooked.',
+  'Flash assist — sausage blinded and eaten',
+  'Bingo bango bongo, bish bash bosh',
+  'Easy peasy lemon squeezy',
+  'Tango down',
 ];
 
 // ── SVG builder ───────────────────────────────────────────────────────────
@@ -387,10 +399,30 @@ function escHtml(s) {
 }
 
 // ── Socket state updates ───────────────────────────────────────────────────
+let prevGroupTotal = 0;
+
 socket.on('state_update', (state) => {
   if (!authToken) return;
   const flashId = state.lastLoggedUserId ?? null;
   renderState(state, flashId);
+
+  const newTotal = state.groupTotal || 0;
+
+  // Goal just reached — show celebration to everyone live, no refresh needed
+  if (prevGroupTotal < 100 && newTotal >= 100) {
+    const seenKey = `goal_seen_${authUserId}`;
+    if (!localStorage.getItem(seenKey)) {
+      showCelebration();
+    }
+  }
+
+  // Every sausage after 100 also gets confetti (brief burst)
+  if (newTotal > 100 && newTotal > prevGroupTotal) {
+    startConfetti();
+    setTimeout(stopConfetti, 2500);
+  }
+
+  prevGroupTotal = newTotal;
 });
 
 // ── Log buttons ─────────────────────────────────────────────────────────────
@@ -513,7 +545,7 @@ function playEatAnimation() {
           eatOverlay.classList.add('hidden');
           eatMsg.style.opacity = '0';
           resolve();
-        }, 900);
+        }, 2000);
         return;
       }
 
@@ -547,6 +579,7 @@ function showCelebration() {
 celebrateDismiss.addEventListener('click', async () => {
   celebrateOverlay.classList.add('hidden');
   stopConfetti();
+  localStorage.setItem(`goal_seen_${authUserId}`, '1');
   await apiFetch('/api/celebrate/seen', { method: 'POST' }).catch(() => {});
 });
 
