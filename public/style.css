@@ -436,6 +436,19 @@ header {
 
 #eat-sausage-wrap { position: relative; width: 170px; height: 80px; }
 
+.eat-multikill {
+  font-family: 'Georgia', serif;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 24px currentColor, 0 2px 8px rgba(0,0,0,0.8);
+  opacity: 0;
+  min-height: 2.5rem;
+  transition: opacity 0.15s, transform 0.2s;
+}
+
 .eat-msg {
   font-family: 'Georgia', serif;
   font-size: 1.35rem;
@@ -446,6 +459,27 @@ header {
   opacity: 0;
   max-width: 320px;
   font-style: italic;
+}
+
+/* ── Kill streak badges ─────────────────────────────────────────────────── */
+.lb-streaks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-left: 32px;
+  margin-top: 2px;
+}
+
+.mk-badge {
+  font-size: 0.68rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 1px 6px;
+  opacity: 0.9;
+  background: rgba(0,0,0,0.25);
 }
 
 /* ── Goal celebration ───────────────────────────────────────────────────── */

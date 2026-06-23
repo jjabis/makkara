@@ -48,7 +48,24 @@ function getLeaderboard() {
     GROUP BY u.id
     ORDER BY total DESC, u.username ASC
   `).all();
-  return rows;
+  return rows.map(row => ({ ...row, multiKills: getMultiKillCounts(row.id) }));
+}
+
+function getMultiKillCounts(userId) {
+  const logs = db.prepare('SELECT ts FROM logs WHERE user_id = ? ORDER BY ts ASC').all(userId);
+  let double = 0, triple = 0, overkill = 0, penta = 0, monster = 0;
+  let i = 0;
+  while (i < logs.length) {
+    let len = 1;
+    while (i + len < logs.length && logs[i + len].ts - logs[i + len - 1].ts <= 1200) len++;
+    if (len >= 6) monster++;
+    else if (len >= 5) penta++;
+    else if (len >= 4) overkill++;
+    else if (len >= 3) triple++;
+    else if (len >= 2) double++;
+    i += len;
+  }
+  return { double, triple, overkill, penta, monster };
 }
 
 function getGroupTotal() {
@@ -143,10 +160,18 @@ app.post('/api/log', requireAuth, (req, res) => {
   const newTotal = getGroupTotal();
   checkGoal(prevTotal, newTotal);
 
+  // Count current kill streak: walk backwards through logs, stop when gap > 20 min
+  const recentLogs = db.prepare('SELECT ts FROM logs WHERE user_id = ? ORDER BY ts DESC LIMIT 20').all(forUser);
+  let multiKillCount = 1;
+  for (let i = 1; i < recentLogs.length; i++) {
+    if (recentLogs[i - 1].ts - recentLogs[i].ts <= 1200) multiKillCount++;
+    else break;
+  }
+
   const state = buildState();
   io.emit('state_update', { ...state, lastLoggedUserId: forUser });
 
-  res.json({ ok: true, lastLoggedUserId: forUser });
+  res.json({ ok: true, lastLoggedUserId: forUser, multiKillCount });
 });
 
 // List users (for "log for a mate" modal)
